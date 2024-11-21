@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  mongo:
+    build: .
+    container_name: mongo-dormitory
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+  mysql:
+    container_name: mysql-dormitory
+    image: mysql:8.0  # Wersja MySQL
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: dormitory_management_system
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mongo-data:
+  mysql-data:
