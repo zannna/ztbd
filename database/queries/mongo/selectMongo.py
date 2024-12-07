@@ -96,7 +96,6 @@ class SelectMongo:
             }
         ])
 
-    # nie wiem czy nie do zmiany
     @staticmethod
     def count_number_of_admins(db):
         return db.app_user.aggregate([
@@ -261,7 +260,6 @@ class SelectMongo:
 if __name__ == "__main__":
     client = MongoClient("mongodb://admin:password@localhost:27017/")
     db = client["dormitory_management_system"]
-    # dziwne bo maks 17
     response = SelectMongo.groupReservationPerDevice(db)
     print( len(list(response)))
     response = SelectMongo.countAvarageReservationTimePerDevice(db)

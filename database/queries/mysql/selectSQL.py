@@ -144,7 +144,6 @@ if __name__ == "__main__":
         database="dormitory_management_system"
     )
 
-    # dziwne bo maks 17
     response = SelectSql.groupReservationPerDevice(conn)
     print(len(list(response)))
     response = SelectSql.countAvarageReservationTimePerDevice(conn)
