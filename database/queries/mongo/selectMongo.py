@@ -2,12 +2,9 @@ from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 
-from data.generation import convert_mongo_id_to_uuid
-
-
 class SelectMongo:
     @staticmethod
-    def groupReservationPerDevice(db):
+    def group_reservation_per_device(db):
         return db.reservations.aggregate([
             {
                 "$lookup": {
@@ -46,7 +43,7 @@ class SelectMongo:
         ])
 
     @staticmethod
-    def countAvarageReservationTimePerDevice(db):
+    def count_average_reservation_time_per_device(db):
         return db.reservations.aggregate([
             {
                 "$lookup": {
@@ -140,7 +137,7 @@ class SelectMongo:
         )
 
     @staticmethod
-    def find_dormitory_messages(db, dormitoryId):
+    def find_dormitory_messages(db, dormitory_id):
         return db.message.aggregate([
             {
                 "$lookup": {
@@ -155,7 +152,7 @@ class SelectMongo:
             },
             {
                 "$match": {
-                    "user_info.id_dorm": ObjectId(dormitoryId)
+                    "user_info.id_dorm": ObjectId(dormitory_id)
                 }
             },
             {
@@ -259,22 +256,22 @@ class SelectMongo:
 
 if __name__ == "__main__":
     client = MongoClient("mongodb://admin:password@localhost:27017/")
-    db = client["dormitory_management_system"]
-    response = SelectMongo.groupReservationPerDevice(db)
+    database = client["dormitory_management_system"]
+    response = SelectMongo.group_reservation_per_device(database)
     print( len(list(response)))
-    response = SelectMongo.countAvarageReservationTimePerDevice(db)
+    response = SelectMongo.count_average_reservation_time_per_device(database)
     print( len(list(response)))
-    response = SelectMongo.count_number_of_admins(db)
+    response = SelectMongo.count_number_of_admins(database)
     print( len(list(response)))
-    response = SelectMongo.find_problem_by_id(db, '674f8f8e8872d55fbc96ed06')
+    response = SelectMongo.find_problem_by_id(database, '674f8f8e8872d55fbc96ed06')
     print(list(response))
-    response =  SelectMongo.find_dormitory_messages(db, '674f8f8b8872d55fbc96d8b9')
+    response =  SelectMongo.find_dormitory_messages(database, '674f8f8b8872d55fbc96d8b9')
     print(len(list(response)))
-    response =  SelectMongo.find_reservations_earlier_then_concrete_data(db)
+    response =  SelectMongo.find_reservations_earlier_then_concrete_data(database)
     print(response)
-    response = SelectMongo.find_users(db)
+    response = SelectMongo.find_users(database)
     print(len(list(response)))
-    response = SelectMongo.count_problems_by_status(db)
+    response = SelectMongo.count_problems_by_status(database)
     print(list(response))
-    response =SelectMongo.group_messages_per_dormitory(db)
+    response =SelectMongo.group_messages_per_dormitory(database)
     print(len(list(response)))

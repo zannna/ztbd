@@ -1,8 +1,7 @@
 import mysql.connector
 
 
-class SelectSql:
-
+class SelectSQL:
     @staticmethod
     def run_query(connection, query):
         cursor = connection.cursor(dictionary=True)
@@ -12,8 +11,8 @@ class SelectSql:
         return cursor.fetchall()
 
     @staticmethod
-    def groupReservationPerDevice(connection):
-        return SelectSql.run_query(connection,
+    def group_reservation_per_device(connection):
+        return SelectSQL.run_query(connection,
                                    """
                                      SELECT 
                                          d.name_device AS device_name,
@@ -32,22 +31,22 @@ class SelectSql:
                                    """)
 
     @staticmethod
-    def countAvarageReservationTimePerDevice(connection):
-        return SelectSql.run_query(connection,
+    def count_average_reservation_time_per_device(connection):
+        return SelectSQL.run_query(connection,
                                    """
                                    SELECT 
-                                      d.id_device,
-                                      d.name_device,
+                                       d.id_device,
+                                       d.name_device,
                                        AVG(TIMESTAMPDIFF(SECOND, r.start_date, r.end_date)) / 3600 AS average_duration
-                                  FROM reservations r
-                                  JOIN device d ON r.id_device = d.id_device
-                                  GROUP BY d.id_device
-                                  ORDER BY average_duration DESC;
+                                   FROM reservations r
+                                   JOIN device d ON r.id_device = d.id_device
+                                   GROUP BY d.id_device
+                                   ORDER BY average_duration DESC;
                                    """)
 
     @staticmethod
     def find_problem_by_id(connection, problem_id):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    f"""
                             SELECT *
                             FROM problems p
@@ -56,68 +55,67 @@ class SelectSql:
 
     @staticmethod
     def count_number_of_admins(connection):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    """
                                    SELECT 
-                                      dorm.id_dorm,
-                                      dorm.dorm_name,
-                                      COUNT(ua.id_user) AS admin_count
-                                  FROM users_authorities ua
-                                  JOIN authority a ON ua.id_auth = a.id_auth
-                                  JOIN app_user u ON ua.id_user = u.id_user
-                                  JOIN dormitory dorm ON u.id_dorm = dorm.id_dorm
-                                  WHERE a.authority = 'ADMIN'
-                                  GROUP BY dorm.id_dorm
-                                  ORDER BY admin_count DESC;
+                                       dorm.id_dorm,
+                                       dorm.dorm_name,
+                                       COUNT(ua.id_user) AS admin_count
+                                   FROM users_authorities ua
+                                   JOIN authority a ON ua.id_auth = a.id_auth
+                                   JOIN app_user u ON ua.id_user = u.id_user
+                                   JOIN dormitory dorm ON u.id_dorm = dorm.id_dorm
+                                   WHERE a.authority = 'ADMIN'
+                                   GROUP BY dorm.id_dorm
+                                   ORDER BY admin_count DESC;
                                    """)
 
     @staticmethod
     def find_dormitory_messages(connection, dormitory_id):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    f"""
                          SELECT 
-                            m.message,
-                            m.mess_date,
-                            dorm.dorm_name
-                        FROM message m
-                        JOIN app_user u ON m.id_user = u.id_user
-                        JOIN dormitory dorm ON u.id_dorm = dorm.id_dorm
-                        WHERE dorm.id_dorm = '{dormitory_id}'
-                        ORDER BY m.mess_date ASC;
+                             m.message,
+                             m.mess_date,
+                             dorm.dorm_name
+                         FROM message m
+                         JOIN app_user u ON m.id_user = u.id_user
+                         JOIN dormitory dorm ON u.id_dorm = dorm.id_dorm
+                         WHERE dorm.id_dorm = '{dormitory_id}'
+                         ORDER BY m.mess_date ASC;
                          """)
 
     @staticmethod
     def find_reservations_earlier_then_concrete_data(connection):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    """
                                    SELECT COUNT(*) AS problem_count
-                                  FROM problems
-                                  WHERE problem_date < '2024-09-01';
+                                   FROM problems
+                                   WHERE problem_date < '2024-09-01';
                                    """)
 
     @staticmethod
     def find_users(connection):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    """
                                    SELECT * from app_user;
                                    """)
 
     @staticmethod
     def count_problems_by_status(connection):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    """
                                    SELECT 
-                                      status,
-                                      COUNT(*) AS count
-                                  FROM problems
-                                  GROUP BY status
-                                  ORDER BY count DESC;
-              
+                                       status,
+                                       COUNT(*) AS count
+                                   FROM problems
+                                   GROUP BY status
+                                   ORDER BY count DESC;
                                    """)
 
     @staticmethod
     def group_messages_per_dormitory(connection):
-        return SelectSql.run_query(connection,
+        return SelectSQL.run_query(connection,
                                    """
                                                SELECT 
                                                    d.dorm_name AS dorm_name,
@@ -144,22 +142,22 @@ if __name__ == "__main__":
         database="dormitory_management_system"
     )
 
-    response = SelectSql.groupReservationPerDevice(conn)
+    response = SelectSQL.group_reservation_per_device(conn)
     print(len(list(response)))
-    response = SelectSql.countAvarageReservationTimePerDevice(conn)
+    response = SelectSQL.count_average_reservation_time_per_device(conn)
     print(len(list(response)))
-    response = SelectSql.count_number_of_admins(conn)
+    response = SelectSQL.count_number_of_admins(conn)
     print(len(list(response)))
-    response = SelectSql.find_problem_by_id(conn, '000f28d2-eb2b-586a-949a-6439378f4d18')
+    response = SelectSQL.find_problem_by_id(conn, '000f28d2-eb2b-586a-949a-6439378f4d18')
     print(response)
-    response = SelectSql.find_dormitory_messages(conn, '00059349-f566-566d-a89d-c423576285d0')
+    response = SelectSQL.find_dormitory_messages(conn, '00059349-f566-566d-a89d-c423576285d0')
     print(len(list(response)))
-    response = SelectSql.find_reservations_earlier_then_concrete_data(conn)
+    response = SelectSQL.find_reservations_earlier_then_concrete_data(conn)
     print(response)
-    response = SelectSql.find_users(conn)
+    response = SelectSQL.find_users(conn)
     print(len(list(response)))
-    response = SelectSql.count_problems_by_status(conn)
+    response = SelectSQL.count_problems_by_status(conn)
     print(response)
-    response = SelectSql.group_messages_per_dormitory(conn)
+    response = SelectSQL.group_messages_per_dormitory(conn)
     print(len(list(response)))
     conn.close()
