@@ -1,3 +1,5 @@
+import time
+
 import mysql.connector
 
 
@@ -6,9 +8,12 @@ class SelectSQL:
     def run_query(connection, query):
         cursor = connection.cursor(dictionary=True)
 
+        start = time.time()
         cursor.execute(query)
+        result = cursor.fetchall()
+        elapsed = time.time() - start
 
-        return cursor.fetchall()
+        return result, elapsed
 
     @staticmethod
     def group_reservation_per_device(connection):
@@ -132,32 +137,3 @@ class SelectSQL:
                                                    message_count DESC;
                                            """
                                    )
-
-
-if __name__ == "__main__":
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="user",
-        password="password",
-        database="dormitory_management_system"
-    )
-
-    response = SelectSQL.group_reservation_per_device(conn)
-    print(len(list(response)))
-    response = SelectSQL.count_average_reservation_time_per_device(conn)
-    print(len(list(response)))
-    response = SelectSQL.count_number_of_admins(conn)
-    print(len(list(response)))
-    response = SelectSQL.find_problem_by_id(conn, '000f28d2-eb2b-586a-949a-6439378f4d18')
-    print(response)
-    response = SelectSQL.find_dormitory_messages(conn, '00059349-f566-566d-a89d-c423576285d0')
-    print(len(list(response)))
-    response = SelectSQL.find_reservations_earlier_then_concrete_data(conn)
-    print(response)
-    response = SelectSQL.find_users(conn)
-    print(len(list(response)))
-    response = SelectSQL.count_problems_by_status(conn)
-    print(response)
-    response = SelectSQL.group_messages_per_dormitory(conn)
-    print(len(list(response)))
-    conn.close()

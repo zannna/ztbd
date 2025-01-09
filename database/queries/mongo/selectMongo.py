@@ -1,11 +1,12 @@
+import time
 from bson import ObjectId
-from pymongo import MongoClient
 from datetime import datetime
 
 class SelectMongo:
     @staticmethod
     def group_reservation_per_device(db):
-        return db.reservations.aggregate([
+        start = time.time()
+        result = db.reservations.aggregate([
             {
                 "$lookup": {
                     "from": "device",
@@ -41,10 +42,13 @@ class SelectMongo:
                 }
             }
         ])
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def count_average_reservation_time_per_device(db):
-        return db.reservations.aggregate([
+        start = time.time()
+        result = db.reservations.aggregate([
             {
                 "$lookup": {
                     "from": "device",
@@ -92,10 +96,13 @@ class SelectMongo:
                 }
             }
         ])
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def count_number_of_admins(db):
-        return db.app_user.aggregate([
+        start = time.time()
+        result = db.app_user.aggregate([
             {
                 "$match": {
                     "authority": "ADMIN"
@@ -127,18 +134,24 @@ class SelectMongo:
                     }
                 }
             ])
+        elapsed = time.time() - start
+        return result, elapsed
 
 
     @staticmethod
     def find_problem_by_id(db, id_problem):
-        return db.problems.find({
+        start = time.time()
+        result = db.problems.find({
             "_id": ObjectId(id_problem),
         }
         )
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def find_dormitory_messages(db, dormitory_id):
-        return db.message.aggregate([
+        start = time.time()
+        result = db.message.aggregate([
             {
                 "$lookup": {
                     "from": "app_user",
@@ -180,21 +193,30 @@ class SelectMongo:
                 }
             }
         ])
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def find_reservations_earlier_then_concrete_data(db):
         date_limit = datetime(2024, 9, 1)
-        return db.problems.count_documents({
+        start = time.time()
+        result = db.problems.count_documents({
             "problem_date": {"$lt": date_limit}
         })
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def find_users(db):
-        return db.app_user.find()
+        start = time.time()
+        result = db.app_user.find()
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def count_problems_by_status(db):
-        return db.problems.aggregate([
+        start = time.time()
+        result = db.problems.aggregate([
             {
                 "$group": {
                     "_id": "$status",
@@ -207,10 +229,13 @@ class SelectMongo:
                 }
             }
         ])
+        elapsed = time.time() - start
+        return result, elapsed
 
     @staticmethod
     def group_messages_per_dormitory(db):
-        return db.message.aggregate([
+        start = time.time()
+        result = db.message.aggregate([
             {
                 "$lookup": {
                     "from": "app_user",
@@ -252,26 +277,5 @@ class SelectMongo:
                 }
             }
         ])
-
-
-if __name__ == "__main__":
-    client = MongoClient("mongodb://admin:password@localhost:27017/")
-    database = client["dormitory_management_system"]
-    response = SelectMongo.group_reservation_per_device(database)
-    print( len(list(response)))
-    response = SelectMongo.count_average_reservation_time_per_device(database)
-    print( len(list(response)))
-    response = SelectMongo.count_number_of_admins(database)
-    print( len(list(response)))
-    response = SelectMongo.find_problem_by_id(database, '674f8f8e8872d55fbc96ed06')
-    print(list(response))
-    response =  SelectMongo.find_dormitory_messages(database, '674f8f8b8872d55fbc96d8b9')
-    print(len(list(response)))
-    response =  SelectMongo.find_reservations_earlier_then_concrete_data(database)
-    print(response)
-    response = SelectMongo.find_users(database)
-    print(len(list(response)))
-    response = SelectMongo.count_problems_by_status(database)
-    print(list(response))
-    response =SelectMongo.group_messages_per_dormitory(database)
-    print(len(list(response)))
+        elapsed = time.time() - start
+        return result, elapsed

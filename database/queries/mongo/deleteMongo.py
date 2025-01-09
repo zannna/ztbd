@@ -1,29 +1,24 @@
-from pymongo import MongoClient
+import time
 
 class DeleteMongo:
     @staticmethod
     def delete_many_not_in_batch(db, dormitories):
+        start = time.time()
         for dormitory in dormitories:
             db.dormitory.delete_one({'dorm_name': dormitory})
+        elapsed = time.time() - start
+        return elapsed
 
     @staticmethod
     def delete_many_in_batch(db, dormitories):
+        start = time.time()
         db.dormitory.delete_many({'dorm_name': {'$in': dormitories}})
+        elapsed = time.time() - start
+        return elapsed
 
     @staticmethod
     def delete_one(db, dormitory):
+        start = time.time()
         db.dormitory.delete_one({'dorm_name': dormitory})
-
-
-if __name__ == "__main__":
-    client = MongoClient("mongodb://admin:password@localhost:27017/")
-    database = client["dormitory_management_system"]
-
-    dorm_names = [f"Dormitory {i}" for i in range(1, 10)]
-    DeleteMongo.delete_many_not_in_batch(database, dorm_names)
-
-    dorm_names = [f"Dormitory {i}" for i in range(10, 20)]
-    DeleteMongo.delete_many_in_batch(database, dorm_names)
-
-    dorm_name = "Dormitory 3979"
-    DeleteMongo.delete_one(database, dorm_name)
+        elapsed = time.time() - start
+        return elapsed

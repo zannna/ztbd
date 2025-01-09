@@ -53,19 +53,3 @@ class UpdateSQL:
                                 SET message = 'new message'
                                 LIMIT 1;
                          """)
-
-# if __name__ == "__main__":
-#     conn = mysql.connector.connect(
-#         host="localhost",
-#         user="user",
-#         password="password",
-#         database="dormitory_management_system"
-#     )
-#     result = UpdateSQL.update_password_and_other_fields_when_user_is_admin(conn)
-#     print(result["affected_rows"])
-#     result = UpdateSQL.update_reservation_time(conn)
-#     print(result["affected_rows"])
-#     result = UpdateSQL.update_status_when_problem_is_older_than(conn)
-#     print(result["affected_rows"])
-#     result = UpdateSQL.update_one_message(conn)
-#     print(result["affected_rows"])

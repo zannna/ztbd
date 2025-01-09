@@ -1,39 +1,33 @@
+import time
+
 import mysql.connector
 
 class DeleteSQL:
     @staticmethod
     def delete_many_not_in_batch(connection, dormitories):
         cursor = connection.cursor()
-        for dormitory in dormitories:
-            cursor.execute("DELETE FROM dormitory WHERE dorm_name = ?", (dormitory,))
+        start = time.time()
+        for dorm in dormitories:
+            cursor.execute("DELETE FROM dormitory WHERE dorm_name = %s", (dorm,))
         connection.commit()
+        elapsed = time.time() - start
+        return elapsed
 
     @staticmethod
-    def delete_many_in_batch(connection, dormitories):
+    def delete_many_in_batch(connection, dormitories, placeholders):
         cursor = connection.cursor()
-        query = f"DELETE FROM dormitory WHERE dorm_name IN ({dormitories})"
-        cursor.execute(query, dorm_names)
+        start = time.time()
+        query = f"DELETE FROM dormitory WHERE dorm_name IN ({placeholders})"
+        cursor.execute(query, dormitories)
         connection.commit()
+        elapsed = time.time() - start
+        return elapsed
 
     @staticmethod
-    def delete_one(connection, dormitory):
+    def delete_one(connection, dorm):
         cursor = connection.cursor()
-        cursor.execute("DELETE FROM dormitory WHERE dorm_name = ?", (dormitory,))
+        start = time.time()
+        cursor.execute("DELETE FROM dormitory WHERE dorm_name = %s", (dorm,))
         connection.commit()
-
-if __name__ == "__main__":
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="user",
-        password="password",
-        database="dormitory_management_system"
-    )
-    dorm_names = [f"Dormitory {i}" for i in range(1, 10)]
-    DeleteSQL.delete_many_not_in_batch(conn, dorm_names)
-
-    dorm_names = [f"Dormitory {i}" for i in range(10, 20)]
-    placeholders = ', '.join(['?'] * len(dorm_names))
-    DeleteSQL.delete_many_in_batch(conn, placeholders)
-
-    dorm_name = f"Dormitory 3979"
-    DeleteSQL.delete_one(conn, dorm_name)
+        elapsed = time.time() - start
+        return elapsed
