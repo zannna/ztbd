@@ -3,7 +3,7 @@ import random
 import time
 
 from data.stats_collector import StatsCollector
-from utils.commons import DB_NAME, DB_HOST, DB_USER
+from utils.commons import DB_NAME, DB_HOST, DB_USER, DB_PASS
 from utils.logger import Logger
 from datetime import timedelta
 from database.db_utils import DbUtils
