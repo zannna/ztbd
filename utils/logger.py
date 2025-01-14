@@ -1,16 +1,22 @@
 import os
 
 from data.stats_collector import StatsCollector
-from utils.commons import PATH_TO_LOGS
+from utils.commons import PATH_TO_LOGS, SILENT_MODE
 from datetime import datetime
 
 class Logger:
     @staticmethod
+    def console(msg : str) -> None:
+        if not SILENT_MODE:
+            print(msg)
+
+    @staticmethod
     def log(msg_type : str, msg : str) -> None:
         now = datetime.now()
         filename = PATH_TO_LOGS + now.strftime('%Y-%m-%d') + ".txt"
-        message = f"[{msg_type} - {now.strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
-        print(message)
+        message_console = f"[{msg_type}] {msg}"
+        message_file = f"[{msg_type} - {now.strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
+        Logger.console(message_console)
 
         if os.path.exists(filename):
             mode = 'a'
@@ -18,7 +24,7 @@ class Logger:
             mode = 'w'
 
         with open(filename, mode) as f:
-            f.write(message + '\n')
+            f.write(message_file + '\n')
 
     @staticmethod
     def print_logs() -> None:

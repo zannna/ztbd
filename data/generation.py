@@ -1,129 +1,113 @@
-import mysql.connector
+from math import floor
+
 import random
 import time
 
+from tasks.task import Task
 from data.stats_collector import StatsCollector
-from utils.commons import DB_NAME, DB_HOST, DB_USER, DB_PASS
+from utils.commons import PROGRESS_BAR_LENGTH, INSERT_MSG, INSERT_DORM
 from utils.logger import Logger
 from datetime import timedelta
 from database.db_utils import DbUtils
 from faker import Faker
-from pymongo import MongoClient
 
 
-class Generator:
-    @staticmethod
-    def generate_files(num_elements, batch_size):
-        batches = num_elements // batch_size
-        Logger.log("INFO", f"Generating data ({num_elements} records in {batches} batches)")
+class Generator(Task):
+    def __init__(self, num_elements : int, batch_size : int):
+        super().__init__()
+        self.operation = "INSERT"
+        self.num_elements = num_elements
+        self.batch_size = batch_size
+        self.mongo_stats = StatsCollector("mongo", self.operation, num_elements, batch_size)
+        self.mysql_stats = StatsCollector("mysql", self.operation, num_elements, batch_size)
+        self.messages = INSERT_MSG
+        self.progress_add = int(floor(PROGRESS_BAR_LENGTH / len(self.messages)))
+
+    def run(self):
+        if not self.connected:
+            self.connect()
+        self.generate_files()
+
+    def generate_files(self):
+        batches = self.num_elements // self.batch_size
+        Logger.log("INFO", f"Performing INSERT operations ({self.num_elements} records in {batches} batches)")
         fake = Faker()
 
-        Logger.log("INFO", "Create clear Mongo database")
-        client = MongoClient("mongodb://admin:password@localhost:27017/")
-        DbUtils.clear_database_mongo(client)
-        db = client[DB_NAME]
-        Logger.log("INFO", "Mongo database created")
+        DbUtils.clear_database_mongo(self.client)
+        Logger.console("[INFO] Mongo database created")
 
-        dormitory = db["dormitory"]
-        app_user = db["app_user"]
-        device_db = db["device"]
-        problems = db["problems"]
-        message = db["message"]
-        reservations = db["reservations"]
+        DbUtils.clear_database(self.connection)
+        DbUtils.create_mysql_database(self.connection)
+        Logger.console("[INFO] MySQL database created")
 
-        mysql_conn = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASS,
-            database=DB_NAME
-        )
-        Logger.log("INFO", "Create clear MySQL database")
-        DbUtils.clear_database(mysql_conn)
-        DbUtils.create_mysql_database(mysql_conn)
-        Logger.log("INFO", "MySQL database created")
-
-        cursor = mysql_conn.cursor()
-
-        # Do zliczania
-        mongo_stats = StatsCollector("mongo", "INSERT", num_elements, batch_size)
-        mysql_stats = StatsCollector("mysql", "INSERT", num_elements, batch_size)
-        mysql_time_tmp = 0
-        mongo_time_tmp = 0
-
-        Logger.log("INFO", f"Start generating data...")
-        start = time.time()
-        authorities = Generator.create_authorities(cursor, mysql_conn)
-        dormitories_with_uuid, mysql_time_tmp, mongo_time_tmp = Generator.insert_dormitories(cursor,
-                                                                                             mysql_conn,
-                                                                                             batch_size*2,
-                                                                                             dormitory)
-
-        mysql_stats.add_stats(mysql_time_tmp, batch_size * 2)
-        mongo_stats.add_stats(mongo_time_tmp, batch_size * 2)
+        Logger.console("[INFO] Start generating data...")
+        authorities = self.create_authorities()
+        self.messages = INSERT_DORM
+        self.progress_bar()
+        dormitories_with_uuid, mysql_time_tmp, mongo_time_tmp = self.insert_dormitories()
+        self.progress_bar(3)
+        self.mysql_stats.add_stats(mysql_time_tmp, self.batch_size * 2)
+        self.mongo_stats.add_stats(mongo_time_tmp, self.batch_size * 2)
+        self.messages = INSERT_MSG
+        self.progress_add = int(floor(PROGRESS_BAR_LENGTH / len(self.messages)))
 
         i = 0
-        for batch_start in range(0, num_elements, batch_size):
+        for batch_start in range(0, self.num_elements, self.batch_size):
+            self.index = 0
+            self.progress = 0
             i += 1
-            Logger.log("INFO", f"Generating data ({i}/{batches})")
-            user_ids, mysql_time_tmp, mongo_time_tmp = Generator.create_users(cursor, mysql_conn, batch_size,
-                                                                              fake, dormitories_with_uuid,
-                                                                              authorities, app_user)
-            mysql_stats.add_stats(mysql_time_tmp, batch_size * 2, 2, 2)
-            mongo_stats.add_stats(mongo_time_tmp, batch_size)
+            Logger.console(f"[INFO] Generating data ({i}/{batches})")
+            user_ids, mysql_time_tmp, mongo_time_tmp = self.create_users(fake, dormitories_with_uuid, authorities)
+            self.mysql_stats.add_stats(mysql_time_tmp, self.batch_size * 2, 2, 2)
+            self.mongo_stats.add_stats(mongo_time_tmp, self.batch_size)
 
-            device_ids, mysql_time_tmp, mongo_time_tmp = Generator.create_devices(cursor, mysql_conn,
-                                                                                    batch_size,
-                                                                                    dormitories_with_uuid,
-                                                                                    device_db)
-            mysql_stats.add_stats(mysql_time_tmp, batch_size)
-            mongo_stats.add_stats(mongo_time_tmp, batch_size)
+            device_ids, mysql_time_tmp, mongo_time_tmp = self.create_devices(dormitories_with_uuid)
+            self.mysql_stats.add_stats(mysql_time_tmp, self.batch_size)
+            self.mongo_stats.add_stats(mongo_time_tmp, self.batch_size)
 
-            mysql_time_tmp, mongo_time_tmp = Generator.insert_problems(cursor, mysql_conn, fake, problems,
-                                                                         batch_size, user_ids,
-                                                                         dormitories_with_uuid)
-            mysql_stats.add_stats(mysql_time_tmp, batch_size)
-            mongo_stats.add_stats(mongo_time_tmp, batch_size)
+            mysql_time_tmp, mongo_time_tmp = self.insert_problems(fake, user_ids, dormitories_with_uuid)
+            self.mysql_stats.add_stats(mysql_time_tmp, self.batch_size)
+            self.mongo_stats.add_stats(mongo_time_tmp, self.batch_size)
 
-            mysql_time_tmp, mongo_time_tmp = Generator.insert_messages(cursor, mysql_conn, fake, message,
-                                                                         batch_size, user_ids)
-            mysql_stats.add_stats(mysql_time_tmp, batch_size)
-            mongo_stats.add_stats(mongo_time_tmp, batch_size)
+            mysql_time_tmp, mongo_time_tmp = self.insert_messages(fake, user_ids)
+            self.mysql_stats.add_stats(mysql_time_tmp, self.batch_size)
+            self.mongo_stats.add_stats(mongo_time_tmp, self.batch_size)
 
-            mysql_time_tmp, mongo_time_tmp = Generator.insert_reservations(cursor, mysql_conn, fake,
-                                                                            reservations, batch_size,
-                                                                            user_ids, device_ids)
-            mysql_stats.add_stats(mysql_time_tmp, batch_size)
-            mongo_stats.add_stats(mongo_time_tmp, batch_size)
+            mysql_time_tmp, mongo_time_tmp = self.insert_reservations(fake, user_ids, device_ids)
+            self.mysql_stats.add_stats(mysql_time_tmp, self.batch_size)
+            self.mongo_stats.add_stats(mongo_time_tmp, self.batch_size)
+            self.progress_bar(3)
 
-        end = time.time() - start
+        cursor = self.connection.cursor()
         cursor.close()
-        mysql_conn.close()
+        self.connection.close()
 
-        Logger.log("INFO", f"Data generated in {end:.2f} seconds.")
-        Logger.log("INFO", f"MySQL - data generated in {mysql_stats.total_time:.2f} seconds.")
-        Logger.log("INFO", f"MongoDb - data generated in {mongo_stats.total_time:.2f} seconds.")
-        Logger.save_stats(mysql_stats)
-        Logger.save_stats(mongo_stats)
+        Logger.console("[INFO] Data generated")
+        Logger.log("INFO", f"MySQL - data generated in {self.mysql_stats.total_time:.2f} seconds.")
+        Logger.log("INFO", f"MongoDb - data generated in {self.mongo_stats.total_time:.2f} seconds.")
+        Logger.save_stats(self.mysql_stats)
+        Logger.save_stats(self.mongo_stats)
 
 
-    @staticmethod
-    def create_authorities(cursor, mysql_conn):
+    def create_authorities(self):
         authorities = [{"authority": f"{role}"} for role in ["USER", "ADMIN", "MANAGER"]]
 
         for authority in authorities:
             authority["id_auth"] = DbUtils.generate_uuid()
 
+        cursor = self.connection.cursor()
         cursor.executemany(
             "INSERT INTO authority (id_auth, authority) VALUES (%s, %s)",
             [(a["id_auth"], a["authority"]) for a in authorities]
         )
-        mysql_conn.commit()
+        self.connection.commit()
         return authorities
 
 
-    @staticmethod
-    def insert_dormitories(cursor, mysql_conn, batch_size, dormitory_collection):
+    def insert_dormitories(self):
         dormitories = []
+        dormitory_collection = self.database["dormitory"]
+        batch_size = self.batch_size * 2
         for i in range(1, batch_size):
             dorm = {
                 "dorm_name": f"Dormitory {i}",
@@ -137,20 +121,22 @@ class Generator:
 
         mysql_data = [(id, d["dorm_name"]) for id, d in zip(dormitories_ids, dormitories)]
         start_time = time.time()
+        cursor = self.connection.cursor()
         cursor.executemany(
             "INSERT INTO dormitory (id_dorm, dorm_name) VALUES (%s, %s)",
             mysql_data
         )
-        mysql_conn.commit()
+        self.connection.commit()
         mysql_time = time.time() - start_time
 
         return dormitories, mysql_time, mongo_time
 
 
-    @staticmethod
-    def create_users(cursor, mysql_conn, batch_size, fake, dormitories_with_uuid, authorities, app_user):
+    def create_users(self, fake, dormitories_with_uuid, authorities):
+        self.progress_bar()
         users = []
-        for _ in range(batch_size):
+        app_user = self.database["app_user"]
+        for _ in range(self.batch_size):
             authority = random.choice(authorities)
             user = {
                 "email": fake.email(),
@@ -175,14 +161,16 @@ class Generator:
         mysql_data1 = [(DbUtils.convert_mongo_id_to_uuid(u["_id"]), next(a["id_auth"]
                         for a in authorities if a["authority"] == u["authority"])) for u in users]
 
-        start_time = time.time()
+        self.progress_bar(1)
+        cursor = self.connection.cursor()
+        start = time.time()
         cursor.executemany(
             """
             INSERT INTO app_user (id_user, email, first_name, surname, password, room, university, id_dorm)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, mysql_data
         )
-        mysql_conn.commit()
+        self.connection.commit()
 
         cursor.executemany(
             """
@@ -190,16 +178,17 @@ class Generator:
             VALUES (%s, %s)
             """, mysql_data1
         )
-        mysql_conn.commit()
+        self.connection.commit()
         mysql_time = time.time() - start
 
         return list(result.inserted_ids), mysql_time, mongo_time
 
 
-    @staticmethod
-    def create_devices(cursor, mysql_conn, batch_size, dormitories_with_uuid, device_db):
+    def create_devices(self, dormitories_with_uuid):
+        self.progress_bar(2)
         devices = []
-        for _ in range(batch_size):
+        device_db = self.database["device"]
+        for _ in range(self.batch_size):
             device = {
                 "name_device": f"Device {_}",
                 "number": random.randint(1, 100),
@@ -212,9 +201,11 @@ class Generator:
         device_ids = device_db.insert_many(devices).inserted_ids
         mongo_time = time.time() - start
 
+        self.progress_bar(1)
         mysql_data = [(DbUtils.convert_mongo_id_to_uuid(id), d["name_device"], d["number"], d["work"],
                           DbUtils.convert_mongo_id_to_uuid(d["id_dorm"]))
                          for id, d in zip(device_ids, devices)]
+        cursor = self.connection.cursor()
         start = time.time()
         cursor.executemany(
             """
@@ -222,16 +213,17 @@ class Generator:
             VALUES (%s, %s, %s, %s, %s)
             """, mysql_data
         )
-        mysql_conn.commit()
+        self.connection.commit()
         mysql_time = time.time() - start
 
         return device_ids, mysql_time, mongo_time
 
 
-    @staticmethod
-    def insert_problems(cursor, mysql_conn, fake, problems, batch_size, user_ids, dormitories_with_uuid):
+    def insert_problems(self, fake, user_ids, dormitories_with_uuid):
+        self.progress_bar(2)
         problems_data = []
-        for _ in range(batch_size):
+        problems = self.database["problems"]
+        for _ in range(self.batch_size):
             problem = {
                 "description": fake.sentence(),
                 "problem_date": fake.date_time_this_year(),
@@ -245,6 +237,7 @@ class Generator:
         problem_ids = problems.insert_many(problems_data).inserted_ids
         mongo_time = time.time() - start
 
+        self.progress_bar(1)
         mysql_data = [
                         (
                             DbUtils.convert_mongo_id_to_uuid(id),  # Convert MongoDB ObjectId to UUID
@@ -256,6 +249,7 @@ class Generator:
                         )
                         for id, p in zip(problem_ids, problems_data)
                      ]
+        cursor = self.connection.cursor()
         start = time.time()
         cursor.executemany(
             """
@@ -263,16 +257,17 @@ class Generator:
             VALUES (%s, %s, %s, %s, %s, %s)
             """, mysql_data
         )
-        mysql_conn.commit()
+        self.connection.commit()
         mysql_time = time.time() - start
 
         return mysql_time, mongo_time
 
 
-    @staticmethod
-    def insert_messages(cursor, mysql_conn, fake, message, batch_size, user_ids):
+    def insert_messages(self, fake, user_ids):
+        self.progress_bar(2)
         messages = []
-        for _ in range(batch_size):
+        message = self.database["message"]
+        for _ in range(self.batch_size):
             message_item = {
                 "mess_date": fake.date_time_this_year(),
                 "message": fake.text(max_nb_chars=200),
@@ -284,8 +279,10 @@ class Generator:
         message_ids = message.insert_many(messages).inserted_ids
         mongo_time = time.time() - start
 
+        self.progress_bar(1)
         mysql_data = [(DbUtils.generate_uuid(), m["mess_date"], m["message"], DbUtils.convert_mongo_id_to_uuid(m["id_user"]))
                         for id, m in zip(message_ids, messages)]
+        cursor = self.connection.cursor()
         start = time.time()
         cursor.executemany(
             """
@@ -293,16 +290,17 @@ class Generator:
             VALUES (%s, %s, %s, %s)
             """, mysql_data
         )
-        mysql_conn.commit()
+        self.connection.commit()
         mysql_time = time.time() - start
 
         return mysql_time, mongo_time
 
 
-    @staticmethod
-    def insert_reservations(cursor, mysql_conn, fake, reservations, batch_size, user_ids, device_ids):
+    def insert_reservations(self, fake, user_ids, device_ids):
+        self.progress_bar(2)
+        reservations = self.database["reservations"]
         reservations_data = []
-        for _ in range(batch_size):
+        for _ in range(self.batch_size):
             start_date = fake.date_time_this_year()
             end_date = start_date + timedelta(hours=random.randint(1, 6)) + timedelta(minutes=random.randint(0, 60))
             reservation = {
@@ -317,9 +315,11 @@ class Generator:
         reservations_ids = reservations.insert_many(reservations_data).inserted_ids
         mongo_time = time.time() - start
 
+        self.progress_bar(1)
         mysql_data = [(DbUtils.generate_uuid(), r["start_date"], r["end_date"], DbUtils.convert_mongo_id_to_uuid(r["id_user"]),
                           DbUtils.convert_mongo_id_to_uuid(r["id_device"]))
                          for id, r in zip(reservations_ids, reservations_data)]
+        cursor = self.connection.cursor()
         start = time.time()
         cursor.executemany(
             """
@@ -327,7 +327,7 @@ class Generator:
             VALUES (%s, %s, %s, %s, %s)
             """, mysql_data
         )
-        mysql_conn.commit()
+        self.connection.commit()
         mysql_time = time.time() - start
 
         return mysql_time, mongo_time
