@@ -1,7 +1,8 @@
 version: "3.9"
 services:
   mongo:
-    image: mongo:6.0
+    # image: mongo:6.0
+    image: mongo:latest
     container_name: mongo-dormitory
     ports:
       - "27017:27017"

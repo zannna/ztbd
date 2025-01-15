@@ -1,4 +1,37 @@
-create_tables_sql = """
+from utils.commons import DB_NAME
+import uuid
+
+class DbUtils:
+    @staticmethod
+    def clear_database_mongo(client):
+        client.drop_database(DB_NAME)
+
+    @staticmethod
+    def clear_database(mysql_conn):
+        cursor = mysql_conn.cursor()
+        cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
+        cursor.execute(f"CREATE DATABASE {DB_NAME}")
+        mysql_conn.commit()
+
+    @staticmethod
+    def create_mysql_database(mysql_conn):
+        cursor = mysql_conn.cursor()
+        for statement in CREATE_TABLES_SQL.split(";"):
+            if statement.strip():
+                cursor.execute(statement)
+        mysql_conn.commit()
+
+    @staticmethod
+    def generate_uuid():
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def convert_mongo_id_to_uuid(id):
+        return str(uuid.uuid5(NAMESPACE, str(id)))
+
+
+# CONST
+CREATE_TABLES_SQL = """
 USE dormitory_management_system;
 -- Tabela dormitory (akademiki)
 CREATE TABLE IF NOT EXISTS dormitory (
@@ -68,9 +101,4 @@ CREATE TABLE IF NOT EXISTS users_authorities (
 );
 """
 
-def create_postgres_database(mysql_conn):
-    cursor = mysql_conn.cursor()
-    for statement in create_tables_sql.split(";"):
-        if statement.strip():
-            cursor.execute(statement)
-    mysql_conn.commit()
+NAMESPACE = uuid.UUID('12345678-1234-5678-1234-567812345678')
