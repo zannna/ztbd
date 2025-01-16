@@ -108,7 +108,13 @@ Poniższe uwagi odnoszą się do wszystkich wymienionych wyżej operacji:
 - dane zgromadzone podczas testów, w postaci tabel i wykresów. 
 
 ### 4. Aplikacja
-*TBD*
+Aplikacja uruchamia się w terminalu, do uruchomienia potrzebny jest 
+interperter języka Python (3.12+) oraz Docker. Aby uruchomić program należy wykonać poniższe komendy w podanej kolejności.
+```console
+docker-compose up -d
+pip install -r requirements.txt
+python main.py
+```
 
 ### 5. Wnioski
-*TBD*
+W sprawozdaniu
