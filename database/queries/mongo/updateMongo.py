@@ -40,9 +40,10 @@ class UpdateMongo:
 
     @staticmethod
     def update_status_when_problem_is_older_than(db):
+        year_tmp = datetime.now().year
         start = time.time()
         result = db.problems.update_many(
-            {"problem_date": {"$lt": datetime(2024, 4, 15)}},
+            {"problem_date": {"$lt": datetime(year_tmp, 4, 15)}},
             {"$set": {"status": 0}}
         )
         elapsed_time = time.time() - start

@@ -1,5 +1,6 @@
 import mysql.connector
 import time
+from datetime import date
 
 class UpdateSQL:
     @staticmethod
@@ -38,11 +39,13 @@ class UpdateSQL:
 
     @staticmethod
     def update_status_when_problem_is_older_than(connection):
+        current_date = date.today()
+        date_tmp = f"{current_date.year}-04-15"
         return UpdateSQL.run_query(connection,
-                         """
+                         f"""
                                 UPDATE problems
                                 SET status = 0
-                                WHERE problem_date < '2024-04-15';
+                                WHERE problem_date < '{date_tmp}';
                          """)
 
     @staticmethod
