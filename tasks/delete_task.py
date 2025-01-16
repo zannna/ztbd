@@ -3,7 +3,7 @@ from math import floor
 from data.stats_collector import StatsCollector
 from database.queries.mongo.deleteMongo import DeleteMongo
 from database.queries.mysql.deleteSQL import DeleteSQL
-from utils.commons import DELETE_MSG, PROGRESS_BAR_LENGTH, DORMITORY_MULT
+from utils.commons import DELETE_MSG, PROGRESS_BAR_LENGTH, DORMITORY_MULT, DELETE_NOT_IN_BATCH
 from utils.logger import Logger
 from tasks.task import Task
 
@@ -24,20 +24,22 @@ class DeleteTask(Task):
         self.reset()
         Logger.log("INFO", "Performing DELETE operations")
 
-        a = self.elements // 100
+        a = max(1, self.elements // 1000)
         b = self.elements - 2
 
         # MYSQL
         dorm_names = [f"Dormitory {i}" for i in range(1, a - 1)]
         self.progress_bar()
-        elapsed = DeleteSQL.delete_many_not_in_batch(self.connection, dorm_names)
-        self.mysql_stats.add_stats(elapsed, len(dorm_names))
-        self.save_function_stats("mysql", elapsed, len(dorm_names))
+        if DELETE_NOT_IN_BATCH:
+            elapsed = DeleteSQL.delete_many_not_in_batch(self.connection, dorm_names)
+            self.mysql_stats.add_stats(elapsed, len(dorm_names))
+            self.save_function_stats("mysql", elapsed, len(dorm_names))
         # MONGO
         self.progress_bar(1)
-        elapsed = DeleteMongo.delete_many_not_in_batch(self.database, dorm_names)
-        self.mongo_stats.add_stats(elapsed, len(dorm_names))
-        self.save_function_stats("mongo", elapsed, len(dorm_names))
+        if DELETE_NOT_IN_BATCH:
+            elapsed = DeleteMongo.delete_many_not_in_batch(self.database, dorm_names)
+            self.mongo_stats.add_stats(elapsed, len(dorm_names))
+            self.save_function_stats("mongo", elapsed, len(dorm_names))
 
         # MYSQL
         self.progress_bar(2)

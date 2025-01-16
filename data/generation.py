@@ -83,7 +83,6 @@ class Generator(Task):
         cursor.close()
         self.connection.close()
 
-        Logger.console("[INFO] Data generated")
         Logger.log("INFO", f"MySQL - data generated in {self.mysql_stats.total_time:.2f} seconds.")
         Logger.log("INFO", f"MongoDb - data generated in {self.mongo_stats.total_time:.2f} seconds.")
         Logger.save_stats(self.mysql_stats)

@@ -1,5 +1,5 @@
-NUMBER_OF_DATA = [200, 2000, 20000, 200000]
-BATCH_SIZE = [200, 2000, 20000, 200000]
+NUMBER_OF_DATA = [200, 2000, 20000, 50000, 100000,200000]
+BATCH_SIZE = [200, 2000, 20000, 50000, 100000, 200000]
 DB_HOST = "localhost"
 DB_USER = "user"
 DB_PASS = "password"
@@ -7,6 +7,8 @@ DB_NAME = "dormitory_management_system"
 DORMITORY_MULT = 2
 
 SILENT_MODE = False
+DELETE_NOT_IN_BATCH = False
+DEBUG = True
 
 PATH_TO_LOGS = 'output/logs/'
 PATH_TO_STATS = 'output/stats/'
