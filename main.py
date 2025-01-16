@@ -1,25 +1,41 @@
+import os
+
 from data.generation import Generator
+from data.graph import Grapher
 from tasks.delete_task import DeleteTask
 from tasks.select_task import SelectTask
 from tasks.update_task import UpdateTask
-from utils.commons import (CONSOLE_PROMPT, WRONG_COMMAND, NOT_IMPLEMENTED,
-                           CLOSE_APP, NUMBER_OF_DATA, BATCH_SIZE)
+from utils.commons import (CONSOLE_PROMPT, WRONG_COMMAND,
+                           NUMBER_OF_DATA, BATCH_SIZE, SILENT_MODE,
+                           PATH_TO_LOGS, PATH_TO_STATS, DEBUG)
 from utils.logger import Logger
 
 
 def print_help(command : str)-> None:
     if command == "c":
+        print("")
         print("  [c]   compare databases")
         print("  params:")
         print("    <n> number of iterations that will be performed")
+        print("")
     elif command == "l":
+        print("")
         print("  [l]   show program logs")
+        print("")
     elif command == "q":
+        print("")
         print("  [q]   quit application")
+        print("")
+    elif command == "g":
+        print("")
+        print("  [g]   generate database comparison graphs")
+        print("")
     elif command == "h":
+        print("")
         print("  [h]   display available commands")
         print("  params:")
         print("    <cmd> show command help")
+        print("")
     else:
         print(WRONG_COMMAND)
 
@@ -29,33 +45,49 @@ def main_menu(cmp : bool) -> None:
     print("Usage: <command> <optional params>")
     print("Available commands: ")
     print("  [c]       compare databases")
-    if cmp:
-        print("  [g]       create comparison graphs")
+    if cmp or DEBUG:
+        print("  [g]       generate database comparison graphs")
     print("  [l]       show program logs")
     print("  [h]       display available commands")
     print("  [q]       quit application")
+    print("")
 
 
 def compare(iters : int) -> bool:
-    delete_task = DeleteTask()
-    update_task = UpdateTask()
-    select_task = SelectTask()
-
+    Logger.clear_stats()
     Logger.log("INFO", "Comparing databases - start")
+    if SILENT_MODE:
+        print("[INFO] Comparing databases - start")
     for index, num_elements in enumerate(NUMBER_OF_DATA):
         batch_size = BATCH_SIZE[index]
         Logger.console(f"[INFO] Number of data: {num_elements}")
+        if SILENT_MODE:
+            print(f"[INFO] Number of data: {num_elements}")
+        insert_task = Generator(num_elements, batch_size)
+        select_task = SelectTask(num_elements)
+        update_task = UpdateTask(num_elements)
+        delete_task = DeleteTask(num_elements)
+
         for i in range(iters):
             Logger.console(f"[INFO] Iteration {i + 1} / {iters}")
-            insert_task = Generator(num_elements, batch_size)
+            if SILENT_MODE:
+                print(f"[INFO] Iteration {i + 1} / {iters}")
             insert_task.run()
             select_task.run()
             update_task.run()
             delete_task.run()
     Logger.log("INFO", "Comparing databases - finished")
+    if SILENT_MODE:
+        print("[INFO] Comparing databases - finished")
     return True
 
 if __name__ == '__main__':
+    if not os.path.exists(PATH_TO_LOGS):
+        os.mkdir(PATH_TO_LOGS)
+    if not os.path.exists(PATH_TO_STATS):
+        os.mkdir(PATH_TO_STATS)
+
+    Logger.log_file("INFO", "Program started")
     compared = False
     print()
     main_menu(compared)
@@ -68,19 +100,26 @@ if __name__ == '__main__':
             op = tmp[0].strip()
             opt = ""
         if op == "q":
-            print(CLOSE_APP)
+            print("[INFO] Application is closing...")
+            Logger.log_file("INFO", "Program closed")
             break
         if op == "c":
             try:
                 opt = int(opt)
             except ValueError:
-                Logger.console("[INFO] Using default value (1).")
+                Logger.console("[INFO] Using default value (1)")
                 opt = 1
             compared = compare(opt)
         elif op == "g":
-            if not compared:
-                continue
-            print(NOT_IMPLEMENTED)
+            if not DEBUG:
+                if not compared:
+                    print(f"{CONSOLE_PROMPT}[ERROR] Databases were not compared")
+                    continue
+            grapher = Grapher()
+            if grapher.create():
+                print("[INFO] Graphs were created")
+            else:
+                print(f"{CONSOLE_PROMPT}[ERROR] Stats files not found")
         elif op == "l":
             Logger.print_logs()
         elif op == "h":
@@ -88,8 +127,7 @@ if __name__ == '__main__':
                 main_menu(compared)
             else:
                 print_help(opt)
+        elif op == "":
+            continue
         else:
             print(WRONG_COMMAND)
-
-# TODO: - DELETE - można by przetestować większe zakresy ?
-#       - Wykresy
