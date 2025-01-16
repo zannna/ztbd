@@ -1,6 +1,6 @@
 import time
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, date
 
 class SelectMongo:
     @staticmethod
@@ -197,8 +197,9 @@ class SelectMongo:
         return result, elapsed
 
     @staticmethod
-    def find_reservations_earlier_then_concrete_data(db):
-        date_limit = datetime(2024, 9, 1)
+    def count_problems_earlier_then_concrete_date(db):
+        current_date = date.today()
+        date_limit = datetime(current_date.year, 9, 1)
         start = time.time()
         result = db.problems.count_documents({
             "problem_date": {"$lt": date_limit}

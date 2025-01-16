@@ -1,4 +1,4 @@
-NUMBER_OF_DATA = [200, 2000, 20000, 50000, 100000,200000]
+NUMBER_OF_DATA = [200, 2000, 20000, 50000, 100000, 200000]
 BATCH_SIZE = [200, 2000, 20000, 50000, 100000, 200000]
 DB_HOST = "localhost"
 DB_USER = "user"
@@ -22,7 +22,7 @@ NOT_IMPLEMENTED = f"{CONSOLE_PROMPT}[ERROR] Command not implemented"
 PROGRESS_BAR_LENGTH = 50
 SELECT_MSG = ["Group reservation per device", "Count average reservation time per device",
               "Count number of admins", "Find problem by id", "Find dormitory messages",
-              "Find reservations earlier then concrete data", "Find users",
+              "Count problems earlier then concrete date", "Find users",
               "Count problems by status", "Group messages per dormitory",
               "Completed"]
 DELETE_MSG = ["Many not in batch", "Many in batch", "One dormitory", "Completed"]

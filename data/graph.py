@@ -61,7 +61,7 @@ class Grapher:
             for f in fs:
                 f_name = f"{op} {f.lower()}"
                 self.create_comparison_graph(op, mysql_all, mongo_all, f_name)
-                self.create_bar_chart(mysql_all, mongo_all, f_name)
+                # self.create_bar_chart(mysql_all, mongo_all, f_name)
 
 
     def create_comparison_graph(self, op, mysql_data, mongo_data, f):
@@ -110,7 +110,7 @@ class Grapher:
         plt.figure(figsize=(8, 6))
         plt.bar(dbs, avg, color=['blue', 'red'], alpha=0.7)
         for i, value in enumerate(avg):
-            plt.text(i, value, f'{value:.2f}', ha='center', fontsize=10, color='black')
+            plt.text(i, value, f'{value:.5f}', ha='center', fontsize=10, color='black')
 
         plt.title(f'{f}', fontsize=14)
         plt.ylabel('Average time (sec)', fontsize=12)

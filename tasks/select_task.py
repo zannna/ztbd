@@ -93,13 +93,13 @@ class SelectTask(Task):
 
         # MYSQL
         self.progress_bar(2)
-        response, elapsed = SelectSQL.find_reservations_earlier_then_concrete_data(self.connection)
-        records = len(list(response))
+        response, elapsed = SelectSQL.count_problems_earlier_then_concrete_date(self.connection)
+        records = response[0]['problem_count']
         self.mysql_stats.add_stats(elapsed, records)
         self.save_function_stats("mysql", elapsed, records)
         # MONGO
         self.progress_bar(1)
-        response, elapsed = SelectMongo.find_reservations_earlier_then_concrete_data(self.database)
+        response, elapsed = SelectMongo.count_problems_earlier_then_concrete_date(self.database)
         self.mongo_stats.add_stats(elapsed, response)
         self.save_function_stats("mongo", elapsed, response)
 

@@ -1,4 +1,5 @@
 import time
+from datetime import date
 
 import mysql.connector
 
@@ -91,12 +92,14 @@ class SelectSQL:
                          """)
 
     @staticmethod
-    def find_reservations_earlier_then_concrete_data(connection):
+    def count_problems_earlier_then_concrete_date(connection):
+        current_date = date.today()
+        date_tmp = f"{current_date.year}-09-01"
         return SelectSQL.run_query(connection,
-                                   """
+                                   f"""
                                    SELECT COUNT(*) AS problem_count
                                    FROM problems
-                                   WHERE problem_date < '2024-09-01';
+                                   WHERE problem_date < '{date_tmp}';
                                    """)
 
     @staticmethod
