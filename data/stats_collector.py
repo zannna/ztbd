@@ -2,7 +2,8 @@ from utils.commons import PATH_TO_STATS
 
 
 class StatsCollector:
-    def __init__(self, database : str, operation : str, elements_count : int, batch_size : int) -> None:
+    def __init__(self, database : str, operation : str, elements_count : int,
+                 batch_size : int, fun : str = "All") -> None:
         self.database = database
         self.operation = operation
         self.filepath = PATH_TO_STATS + database + '.csv'
@@ -12,15 +13,20 @@ class StatsCollector:
         self.records_count = 0
         self.tables_count = 0
         self.batches_count = 0
+        self.function = fun
 
-    def add_stats(self, time : float, records : int, tables : int = 1, batches_count : int = 1) -> None:
+    def add_stats(self, time : float, records : int, tables : int = 1,
+                  batches_count : int = 1) -> None:
         self.total_time += time
         self.records_count += records
         self.tables_count += tables
         self.batches_count += batches_count
 
-    def print_stats(self):
-        time_per_record = self.total_time / self.records_count
+    def print_stats(self) -> str:
+        if self.records_count > 0:
+            time_per_record = self.total_time / self.records_count
+        else:
+            time_per_record = 0.0
         time_per_batch = self.total_time / self.batches_count
         time_per_table = self.total_time / self.tables_count
 
@@ -31,4 +37,11 @@ class StatsCollector:
                 f"{self.total_time:.08f},"
                 f"{time_per_record:.08f},"
                 f"{time_per_batch:.08f},"
-                f"{time_per_table:.08f}\n")
+                f"{time_per_table:.08f},"
+                f"{self.function}\n")
+
+    def reset(self):
+        self.total_time = 0.0
+        self.records_count = 0
+        self.tables_count = 0
+        self.batches_count = 0

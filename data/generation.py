@@ -5,7 +5,7 @@ import time
 
 from tasks.task import Task
 from data.stats_collector import StatsCollector
-from utils.commons import PROGRESS_BAR_LENGTH, INSERT_MSG, INSERT_DORM
+from utils.commons import PROGRESS_BAR_LENGTH, INSERT_MSG, INSERT_DORM, DORMITORY_MULT
 from utils.logger import Logger
 from datetime import timedelta
 from database.db_utils import DbUtils
@@ -13,13 +13,13 @@ from faker import Faker
 
 
 class Generator(Task):
-    def __init__(self, num_elements : int, batch_size : int):
+    def __init__(self, elements : int, batch_size : int):
         super().__init__()
         self.operation = "INSERT"
-        self.num_elements = num_elements
+        self.elements = elements
         self.batch_size = batch_size
-        self.mongo_stats = StatsCollector("mongo", self.operation, num_elements, batch_size)
-        self.mysql_stats = StatsCollector("mysql", self.operation, num_elements, batch_size)
+        self.mongo_stats = StatsCollector("mongo", self.operation, self.elements, batch_size)
+        self.mysql_stats = StatsCollector("mysql", self.operation, self.elements, batch_size)
         self.messages = INSERT_MSG
         self.progress_add = int(floor(PROGRESS_BAR_LENGTH / len(self.messages)))
 
@@ -29,8 +29,9 @@ class Generator(Task):
         self.generate_files()
 
     def generate_files(self):
-        batches = self.num_elements // self.batch_size
-        Logger.log("INFO", f"Performing INSERT operations ({self.num_elements} records in {batches} batches)")
+        self.reset()
+        batches = self.elements // self.batch_size
+        Logger.log("INFO", f"Performing INSERT operations ({self.elements} records in {batches} batches)")
         fake = Faker()
 
         DbUtils.clear_database_mongo(self.client)
@@ -52,7 +53,7 @@ class Generator(Task):
         self.progress_add = int(floor(PROGRESS_BAR_LENGTH / len(self.messages)))
 
         i = 0
-        for batch_start in range(0, self.num_elements, self.batch_size):
+        for batch_start in range(0, self.elements, self.batch_size):
             self.index = 0
             self.progress = 0
             i += 1
@@ -107,7 +108,7 @@ class Generator(Task):
     def insert_dormitories(self):
         dormitories = []
         dormitory_collection = self.database["dormitory"]
-        batch_size = self.batch_size * 2
+        batch_size = self.batch_size * DORMITORY_MULT
         for i in range(1, batch_size):
             dorm = {
                 "dorm_name": f"Dormitory {i}",

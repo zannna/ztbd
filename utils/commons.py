@@ -1,20 +1,21 @@
-NUMBER_OF_DATA = [1000, 10000, 100000, 1000000]
-BATCH_SIZE = [1000, 10000, 100000, 100000]
+NUMBER_OF_DATA = [200, 2000, 20000, 200000]
+BATCH_SIZE = [200, 2000, 20000, 200000]
 DB_HOST = "localhost"
 DB_USER = "user"
 DB_PASS = "password"
 DB_NAME = "dormitory_management_system"
+DORMITORY_MULT = 2
 
 SILENT_MODE = False
 
 PATH_TO_LOGS = 'output/logs/'
 PATH_TO_STATS = 'output/stats/'
+PATH_TO_GRAPHS = 'output/graphs/'
 
 CONSOLE_PROMPT = "$console> "
 
 WRONG_COMMAND = f"{CONSOLE_PROMPT}[ERROR] Unknown command"
 NOT_IMPLEMENTED = f"{CONSOLE_PROMPT}[ERROR] Command not implemented"
-CLOSE_APP = f"{CONSOLE_PROMPT}[INFO] Application is closing..."
 
 PROGRESS_BAR_LENGTH = 50
 SELECT_MSG = ["Group reservation per device", "Count average reservation time per device",
