@@ -2,7 +2,8 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from utils.commons import PATH_TO_STATS, PATH_TO_GRAPHS, SELECT_MSG, UPDATE_MSG, DELETE_MSG
+from utils.commons import PATH_TO_STATS, PATH_TO_GRAPHS, SELECT_MSG, UPDATE_MSG, DELETE_MSG, BAR_CHART_FUNCS, \
+    NUMBER_OF_DATA, DORMITORY_MULT
 
 
 class Grapher:
@@ -61,7 +62,8 @@ class Grapher:
             for f in fs:
                 f_name = f"{op} {f.lower()}"
                 self.create_comparison_graph(op, mysql_all, mongo_all, f_name)
-                # self.create_bar_chart(mysql_all, mongo_all, f_name)
+                if f in BAR_CHART_FUNCS:
+                    self.create_bar_chart(mysql_all, mongo_all, f_name)
 
 
     def create_comparison_graph(self, op, mysql_data, mongo_data, f):
@@ -100,6 +102,10 @@ class Grapher:
     def create_bar_chart(self, mysql_data, mongo_data, f : str):
         a = mysql_data[mysql_data['Function'] == f]
         b = mongo_data[mongo_data['Function'] == f]
+
+        x = NUMBER_OF_DATA[-1]
+        a = a[a['Elements'] == x]
+        b = b[b['Elements'] == x]
 
         a = a['TotalTime'].mean()
         b = b['TotalTime'].mean()

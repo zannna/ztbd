@@ -32,4 +32,6 @@ INSERT_DORM = ["Insert dormitories", "Completed"]
 INSERT_MSG = ["Create users", "Create devices", "Insert problems",
               "Insert messages", "Insert reservations", "Completed"]
 
+BAR_CHART_FUNCS = ["Find problem by id", "Find dormitory messages", "One message", "One dormitory"]
+
 MAX_WORD_LEN = max(len(i) for i in SELECT_MSG + DELETE_MSG + UPDATE_MSG + INSERT_MSG + INSERT_DORM)
